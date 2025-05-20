@@ -3,7 +3,7 @@
 defaults:
   - _self_
 
-model_name: GNN_Backbone_3SAT_200
+model_name: MPNN_Backbone_3SAT_200
 model_dir: runs/${model_name}
 
 from_checkpoint: null
@@ -35,7 +35,7 @@ optim:
   warmup_ratio: 0.01
 
 wandb:
-  project: Deep-CDCL
+  project: RLAF
   name: ${model_name}
 
 

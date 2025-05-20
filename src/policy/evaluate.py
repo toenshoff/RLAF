@@ -27,6 +27,18 @@ def sample_var_params(
     scale_sigma: float = 0.1,
     add_timing: bool = False,
 ) -> list[HeteroData]:
+    """
+        Sample variable parameterizations with a given model and attach them to the PyG graphs.
+        :param model: GNN model to use as a policy.
+        :param loader: Dataloader with CNF formula graphs.
+        :param num_samples: Number of parameterizations to sample for each graph.
+        :param max_num_batches: If non-negative, sampling stops after this number of mini batches.
+        :param device: Device to use for GNN inference.
+        :param use_mode: If set to true, the mode of the policy will be used instead of random sampling.
+        :param scale_sigma: Sigma parameters for the log-normal distributions of variable weights.
+        :param add_timing: If true, the GNN forward pass will be timed.
+        :return: list of HeteroData objects where each is an individual CNF graph with attached variables parameterization, and corresponding log probs.
+    """
     model.to(device)
     model.eval()
 
@@ -53,8 +65,6 @@ def sample_var_params(
             torch.cuda.synchronize()
             gpu_time = start.elapsed_time(end) / 1.0e3
 
-        #var_params[0, :, 0].fill_(1)
-        #var_params[0, :, 1:].fill_(1.0)
         log_prob = policy.log_prob(y_var, var_params, var_batch, scale_sigma=scale_sigma)
 
         data.to("cpu")
@@ -94,6 +104,17 @@ def var_params_from_target_prediction(
     pred_scale: float = 1.0,
     add_timing: bool = False,
 ) -> list[HeteroData]:
+    """
+        Map supervised literal predictions to variable parameterizations as described in the paper.
+        :param model: GNN model to use as a policy.
+        :param loader: Dataloader with CNF formula graphs.
+        :param target: Supervised prediction target (backbone or core).
+        :param device: Device to use for GNN inference.
+        :param add_timing: If true, the GNN forward pass will be timed.
+        :param pred_scale: Scaling factor for the variable weights.
+        :return: list of HeteroData objects where each is an individual CNF graph with attached variables parameterization.
+    """
+
     model.to(device)
     model.eval()
 
@@ -160,6 +181,14 @@ def compute_solver_stats(
         num_workers: int = 8,
         **solver_params: Any,
 ) -> pd.DataFrame:
+    """
+    Run sat solver and collect runtime statistics for a set of CNFs.
+    :param dataset: Underlying CNF dataset.
+    :param data_list: List of HeteroData objects containing variable parameterizations.
+    :param num_workers: Number of CPU cores to use for solving.
+    :param solver_params: Additional solver parameters (only used for glucose).
+    :return: A pandas DataFrame containing solver run statistics.
+    """
 
     def iter_inputs():
         for data in data_list:

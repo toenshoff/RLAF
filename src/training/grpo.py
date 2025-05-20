@@ -1,5 +1,4 @@
 import time
-from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -60,7 +59,6 @@ def train_grpo(
         steps: int,
         clip_ratio: float = 0.2,
         kl_penalty: float = 1.0,
-        kl_cutoff: float | None = None,
         global_step: int = 0,
         scale_sigma: float = 0.1,
         device: torch.device | str = "cpu",
@@ -77,12 +75,8 @@ def train_grpo(
     entropy_all = []
     num_steps = 0
 
-    model_state_dict = deepcopy(model.state_dict())
-    optim_state_dict = deepcopy(optim.state_dict())
-
     start_time = time.time()
     for _ in range(epochs):
-        stopping_early = False
 
         for data in loader:
             with torch.amp.autocast(device_type="cuda", enabled=use_amp):
@@ -98,10 +92,6 @@ def train_grpo(
                 advantage = data.stats.transpose(0, 1).float()
                 var_batch = data["lit"].batch[0::2]
 
-                #log_prob_ref = policy.log_prob(y_var_ref, var_params, scale_sigma=scale_sigma)
-                #log_prob = policy.log_prob(y_var, var_params, scale_sigma=scale_sigma)
-                #L, prob_ratio = objective(log_prob, log_prob_ref, advantage[:, var_batch].unsqueeze(-1).tile(1, 1, 2), clip_ratio)
-
                 log_prob = policy.log_prob(y_var, var_params, var_batch, scale_sigma=scale_sigma)
                 L, prob_ratio = objective(log_prob, log_prob_ref, advantage, clip_ratio)
 
@@ -110,17 +100,6 @@ def train_grpo(
                 kl_div_mean = kl_div.mean()
                 kl_div_all.append(kl_div_mean.item())
                 L_total = L - kl_penalty * kl_div_mean
-
-                last_kl_div = kl_div_mean.item()
-                if kl_cutoff is not None and last_kl_div > kl_cutoff:
-                    stopping_early = True
-                    model.load_state_dict(model_state_dict)
-                    optim.load_state_dict(optim_state_dict)
-                    print(f"Early Stopping with KL div {last_kl_div:.4f}")
-                    break
-                else:
-                    model_state_dict = deepcopy(model.state_dict())
-                    optim_state_dict = deepcopy(optim.state_dict())
 
                 entropy = policy.entropy(y_var, var_batch, scale_sigma=scale_sigma)
                 entropy_all.append(entropy.item())
@@ -141,9 +120,6 @@ def train_grpo(
 
                 global_step += 1
                 num_steps += 1
-
-        if stopping_early:
-            break
 
     metrics = {
         "train/L": np.mean(L_all),

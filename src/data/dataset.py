@@ -1,16 +1,14 @@
 from copy import copy
 from multiprocessing import Pool
-from typing import Literal
+from typing import Literal, Callable, Optional
+from glob import glob
 
 import numpy as np
 import pandas as pd
-
-from typing import Callable, Optional
-from glob import glob
-from tqdm import tqdm
 import torch
 from torch_geometric.data import HeteroData, Dataset
 from pysat.formula import CNF
+from tqdm import tqdm
 
 from src.data.cnf import cnf_to_pyg
 from src.solving.backbone import get_backbone_lits
@@ -21,7 +19,7 @@ class DimacsCNFDataset(Dataset):
     """
     This dataset class provides the functionality for:
     1. Loading a collection of DIMACS CNF formulas from a given path or glob pattern (e.g., "*.cnf").
-    2. Converting each loaded CNF to a PyG graph using `cnf_to_pyg`.
+    2. Converting each loaded CNF to a PyG graph.
     3. Applying an optional transform function to each PyG graph.
     """
 
@@ -31,9 +29,8 @@ class DimacsCNFDataset(Dataset):
             transform: Optional[Callable] = None,
     ):
         """
-        :param path: A glob pattern or directory path pointing to DIMACS CNF files.
+        :param path: A pattern or directory path pointing to DIMACS CNF files.
         :param transform: An optional PyG transform to apply to each graph.
-        :param binary_cls_as_edges: Whether to interpret 2-literal clauses as edges in the final graph.
         """
         super().__init__()
         self.path = path
@@ -100,7 +97,7 @@ def _label_fn(args: tuple[str, str]) -> tuple[str, np.ndarray]:
 
 
 class LabeledDataset(DimacsCNFDataset):
-    """ Dataset for supervised training """
+    """ Dataset for supervised training with backbone or unsat core labels"""
 
     def __init__(
             self,
@@ -109,6 +106,12 @@ class LabeledDataset(DimacsCNFDataset):
             target: str = "backbone",
             num_workers: int = 0,
     ):
+        """
+        :param path: A pattern or directory path pointing to DIMACS CNF files.
+        :param transform: An optional PyG transform to apply to each graph.
+        :param target: Supervision target. Either "backbone" or "core". The labels will be added automatically.
+        :param num_workers: Number of workers with which to compute labels.
+        """
         super(LabeledDataset, self).__init__(path, transform)
         self.target = target
         self.num_workers = num_workers
@@ -133,7 +136,10 @@ class LabeledDataset(DimacsCNFDataset):
             data["lit"].target = torch.tensor(target, dtype=torch.float32)
 
 
-class PreferenceTrainingDataset(Dataset):
+class RLTrainingDataset(Dataset):
+    """
+    This dataset class for RL-training with GRPO or DPO. Maintains a set of PyG graphs and associated cost measurements.
+    """
 
     def __init__(
             self,
@@ -142,16 +148,26 @@ class PreferenceTrainingDataset(Dataset):
             target_stat: str = "decisions",
             objective: Literal["minimize", "maximize"] = "minimize",
     ):
+        """
+        :param solver_stats: pandas.DataFrame containing solver statistics.
+        :param data_list: list of HeteroData objects corresponding to the same CNF formulas as `solver_stats`.
+        :param target_stat: Target metric to minimize or maximize.
+        :param objective: Whether to minimize or maximize the target metric.
+        """
         self.solver_stats = solver_stats.sort_values(by=["cnf_id", "sample_id"], ascending=[True, True])
 
         self.data = []
         for data in data_list:
+            # copy to avoid side effects with original data objects
             data = copy(data)
             cnf_id = data.cnf_id.item()
 
+            # convert target cost metric to tensor and add to the data objects
             cnf_stats = self.solver_stats[self.solver_stats["cnf_id"] == cnf_id]
             stats = torch.tensor(cnf_stats[target_stat].to_numpy())
 
+            # Sort results and associated variable parameterizations according to the costs.
+            # This is needed for DPO training.
             if objective == "minimize":
                 idx = torch.argsort(-stats)
             else:
@@ -160,13 +176,14 @@ class PreferenceTrainingDataset(Dataset):
             var_params = data["var"].var_params
             log_prob = data.log_prob
 
+            # add ordered parameters, log_probs and costs to the data object.
             data["var"].var_params = var_params[:, idx]
             data.log_prob = log_prob[idx].unsqueeze(0)
             data.stats = stats[idx].unsqueeze(0)
 
             self.data.append(data)
 
-        super(PreferenceTrainingDataset, self).__init__()
+        super(RLTrainingDataset, self).__init__()
 
     def __len__(self):
         return len(self.data)

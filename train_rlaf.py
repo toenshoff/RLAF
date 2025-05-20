@@ -1,5 +1,4 @@
 import os
-from copy import deepcopy
 
 import hydra
 import numpy as np
@@ -11,8 +10,8 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.loader import DataLoader
 from torch_geometric.seed import seed_everything
 
-from evaluate import load_checkpoint
-from src.data.dataset import DimacsCNFDataset, PreferenceTrainingDataset
+from evaluate_rlaf_solver import load_checkpoint
+from src.data.dataset import DimacsCNFDataset, RLTrainingDataset
 from src.policy.evaluate import sample_var_params, compute_solver_stats
 from src.model.model import GNN, init_model
 from src.data.transform import AddNodeFeatures
@@ -73,7 +72,7 @@ def save_model(model: GNN, cfg: DictConfig, checkpoint_name: str = "last") -> No
     torch.save(state_dict, ckpt_path)
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="config_train")
+@hydra.main(version_base=None, config_path="configs", config_name="config_train_rlaf")
 def main(cfg: DictConfig):
     OmegaConf.resolve(cfg)
     print(OmegaConf.to_yaml(cfg))
@@ -88,7 +87,7 @@ def main(cfg: DictConfig):
     if cfg.from_checkpoint is not None:
         model, transform, _ = load_checkpoint(cfg.from_checkpoint)
     else:
-        transform = AddNodeFeatures(rwpe_walk_length=cfg.model.rwpe_walk_length)
+        transform = AddNodeFeatures()
         model = init_model(cfg, transform)
 
     dataset_train = DimacsCNFDataset(
@@ -140,9 +139,6 @@ def main(cfg: DictConfig):
         save_model(model, cfg, f"iter=0")
 
     best_score = np.inf
-    best_model_state_dict = deepcopy(model.state_dict())
-    best_optim_state_dict = deepcopy(optim.state_dict())
-    iter_since_best = 0
 
     global_step = 0
     for iteration in range(cfg.training.iterations):
@@ -176,21 +172,11 @@ def main(cfg: DictConfig):
                 target_stat=cfg.training.target_stat
             )
 
-            iter_since_best += 1
             score = solver_stats_val[cfg.training.target_stat].mean()
             if score < best_score:
                 print("Saving new best checkpoint")
                 save_model(model, cfg, "best")
                 best_score = score
-                iter_since_best = 0
-                best_model_state_dict = deepcopy(model.state_dict())
-                best_optim_state_dict = deepcopy(optim.state_dict())
-
-            if cfg.training.reset_to_best_patience is not None and iter_since_best >= cfg.training.reset_to_best_patience:
-                print("Reset patience exceeded, resetting model to best checkpoint.")
-                model.load_state_dict(best_model_state_dict)
-                optim.load_state_dict(best_optim_state_dict)
-                iter_since_best = 0
 
         data_list_train = sample_var_params(
             model=model,
@@ -220,14 +206,14 @@ def main(cfg: DictConfig):
 
         if cfg.method == "grpo":
             solver_stats["advantage"] = get_grpo_advantage(solver_stats, cfg.training.target_stat)
-            iteration_dataset = PreferenceTrainingDataset(
+            iteration_dataset = RLTrainingDataset(
                 data_list=data_list_train,
                 solver_stats=solver_stats,
                 target_stat="advantage",
                 objective="maximize",
             )
         else:
-            iteration_dataset = PreferenceTrainingDataset(
+            iteration_dataset = RLTrainingDataset(
                 data_list=data_list_train,
                 solver_stats=solver_stats,
                 target_stat=cfg.training.target_stat
@@ -249,7 +235,6 @@ def main(cfg: DictConfig):
                 steps=cfg.training.steps_per_iter,
                 clip_ratio=cfg.training.clip_ratio,
                 kl_penalty=cfg.training.kl_penalty,
-                kl_cutoff=cfg.training.kl_cutoff,
                 global_step=global_step,
                 device=device,
                 use_amp=cfg.training.use_amp,

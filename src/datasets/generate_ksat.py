@@ -7,11 +7,11 @@ from cnfgen import CNF
 from cnfgen.families.randomformulas import RandomKCNF
 from torch_geometric import seed_everything
 
-from src.datasets.generate_data import CNFGenerator
+from src.datasets.generate_balanced import BalancedGenerator
 from src.solving.solver import solve_cnf
 
 
-class Balanced3SATGenerator(CNFGenerator):
+class Balanced3SATGenerator(BalancedGenerator):
 
     def __init__(
         self,
@@ -19,11 +19,9 @@ class Balanced3SATGenerator(CNFGenerator):
         target_num: int = 1000,
         data_dir: str = "data/3sat",
         num_workers: int = 8,
-        epsilon: float = 0.2,
         seed: int = 1729,
     ):
         self.num_var = num_var if isinstance(num_var, tuple) else (num_var, num_var)
-        self.epsilon = epsilon
         super(Balanced3SATGenerator, self).__init__(
             target_num=target_num,
             data_dir=data_dir,
@@ -34,9 +32,7 @@ class Balanced3SATGenerator(CNFGenerator):
     def _sample_formula(self):
         n = np.random.choice(range(self.num_var[0], self.num_var[1] + 1))
         alpha = (4.258 * n + 58.26 / (n**(2/3))) / n
-        m_min = int((alpha - self.epsilon) * n)
-        m_max = int((alpha + self.epsilon) * n)
-        m = np.random.choice(range(m_min, m_max + 1))
+        m = int(alpha * n)
         f = RandomKCNF(3, n, m)
         return f
 
@@ -88,9 +84,7 @@ class Random3SATGenerator:
     def _sample_formula(self):
         n = np.random.choice(range(self.num_var[0], self.num_var[1] + 1))
         alpha = (4.258 * n + 58.26 / (n**(2/3))) / n
-        m_min = int((alpha - self.epsilon) * n)
-        m_max = int((alpha + self.epsilon) * n)
-        m = np.random.choice(range(m_min, m_max + 1))
+        m = int(alpha * n)
         f = RandomKCNF(3, n, m)
         return f
 

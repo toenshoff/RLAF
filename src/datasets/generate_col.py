@@ -11,10 +11,10 @@ from pysat.formula import CNF as PSCNF
 from pysat.solvers import Glucose42
 from torch_geometric import seed_everything
 
-from src.datasets.generate_data import CNFGenerator
+from src.datasets.generate_balanced import BalancedGenerator
 
 
-class BalancedColoringGenerator(CNFGenerator):
+class BalancedColoringGenerator(BalancedGenerator):
 
     def __init__(
         self,

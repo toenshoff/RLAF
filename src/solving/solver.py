@@ -9,8 +9,8 @@ from src.data.io_utils import load_dimacs_cnf
 
 
 SOLVER_BIN_PATHS = {
-    "glucose_weighted": "solvers/glucose_weighted/simp/glucose_static",
     "glucose": "solvers/glucose/simp/glucose_static",
+    "glucose_weighted": "solvers/glucose_weighted/simp/glucose_static",
     "march": "solvers/march/march_nh",
     "march_weighted": "solvers/march_weighted/march_nh",
 }
@@ -20,6 +20,7 @@ STATS = ["decisions", "conflicts", "propagations", "restarts", "CPU time"]
 
 
 def stdout_to_results_dict(stdout: str) -> dict[str, Any]:
+    """ Parse a string of solver outputs into a results dictionary """
     stats = {}
 
     for line in stdout.splitlines():
@@ -36,6 +37,14 @@ def stdout_to_results_dict(stdout: str) -> dict[str, Any]:
 
 
 def cnf_to_dimacs(f: list[list[int]], var_params: np.ndarray | None = None) -> str:
+    """
+    :param f: CNF formula formatted as a list of lists of signed integers. Each integer is one literal.
+    :param var_params: Variable parameterization W. This is an array of shape [num_vars, 2], where
+    var_params[i,0] is the polarity and var_params[i,1] is the variable weight.
+    :return: The DIMACS string that represents the CNF formula. If `var_params` is `None`, then the
+     polarities and weights are included in the string as a comment line starting with 'c weight'.
+     Our extended solvers are built to parse polarities and weights from this line, if provided.
+    """
     # Determine the maximum variable index
     variables = set(abs(lit) for clause in f for lit in clause)
     num_variables = max(variables)
@@ -65,6 +74,17 @@ def solve_cnf(
         solver: str = "glucose",
         **params: Any,
 ) -> dict[str, Any]:
+    """
+    Solves a given CNF formula with a specified solver. With weights and polarities are provided then the guided version of the solver is used.
+    :param f: CNF formula formatted as a list of lists of signed integers. Each integer is one literal.
+    :param var_params: Variable parameterization W. This is an array of shape [num_vars, 2], where
+    var_params[i,0] is the polarity and var_params[i,1] is the variable weight.
+    :param seed: Seed for random number generation passed to the glucose solver.
+    :param solver: Solver to use. Either glucose or march,
+    :param params: Solver CLI parameters. Only used with glucose.
+    :return: A dictionary that with solver statistics, including the results, the runtime and the number of decisions required.
+    """
+
     dimacs_str = cnf_to_dimacs(f, var_params=var_params)
 
     if solver != "march":
@@ -105,11 +125,3 @@ def solve_cnf(
 
     stats = stdout_to_results_dict(result.stdout)
     return stats
-
-
-if __name__ == '__main__':
-    cnf = load_dimacs_cnf("data/satlib/V250-C1065/uuf250-010.cnf")
-    assign = np.zeros((250, 3), dtype=np.float32)
-    assign[:, 1:] = 1.0
-    stats = solve_cnf(cnf, seed=None, var_params=assign, solver="march")
-    print(stats)

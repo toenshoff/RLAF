@@ -6,7 +6,7 @@ from torch_geometric import seed_everything
 from tqdm import tqdm
 
 
-class CNFGenerator:
+class BalancedGenerator:
 
     def __init__(
         self,

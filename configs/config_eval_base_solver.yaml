@@ -9,11 +9,10 @@ dataset:
 solver:
   solver: march
   num_workers: 8
-  add_var_params: "none"
   params:
     cpu-lim: 36000
     rnd-freq: 0.0
-    K: 0.8
+    K: 0.1
 
 seed: 1729
 

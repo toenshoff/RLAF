@@ -1,5 +1,4 @@
 import time
-from copy import deepcopy
 
 import numpy as np
 import torch
@@ -19,7 +18,6 @@ def train_dpo(
         steps: int,
         beta: float = 1.0,
         kl_penalty: float = 1.0,
-        kl_cutoff: float | None = None,
         global_step: int = 0,
         scale_sigma: float = 0.1,
         device: torch.device | str = "cpu",
@@ -35,12 +33,8 @@ def train_dpo(
     entropy_all = []
     num_steps = 0
 
-    model_state_dict = deepcopy(model.state_dict())
-    optim_state_dict = deepcopy(optim.state_dict())
-
     start_time = time.time()
     for _ in range(epochs):
-        stopping_early = False
 
         for data in loader:
             with torch.amp.autocast(device_type="cuda", enabled=use_amp):
@@ -71,17 +65,6 @@ def train_dpo(
                 kl_div_mean = kl_div.mean()
                 kl_div_all.append(kl_div_mean.item())
                 L_total = L - kl_penalty * kl_div_mean
-
-                last_kl_div = kl_div_mean.item()
-                if kl_cutoff is not None and last_kl_div > kl_cutoff:
-                    stopping_early = True
-                    model.load_state_dict(model_state_dict)
-                    optim.load_state_dict(optim_state_dict)
-                    print(f"Early Stopping with KL div {last_kl_div:.4f}")
-                    break
-                else:
-                    model_state_dict = deepcopy(model.state_dict())
-                    optim_state_dict = deepcopy(optim.state_dict())
 
                 entropy = policy.entropy(y_var, var_batch, scale_sigma=scale_sigma)
                 entropy_all.append(entropy.item())

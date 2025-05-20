@@ -20,11 +20,9 @@ training:
   clip_ratio: 0.2
   beta: 1.0
   kl_penalty: 0.1
-  kl_cutoff: null
   target_stat: decisions
   num_samples: 40
-  use_amp: False
-  reset_to_best_patience: null
+  use_amp: True
 
 dataset:
   train_path: "data/training/3sat/200/*.cnf"
@@ -33,22 +31,19 @@ dataset:
 solver:
   solver: glucose
   num_workers: 8
-  params:
+  params: # CLI parameters for glucose (not used when solver=march)
     cpu-lim: 60
     rnd-freq: 0.0
     K: 0.1
 
 model:
-  type: MPNN
   channels: 256
   num_layers: 10
   aggr: [mean]
-  global_aggr: null
-  nheads: 8
   feature_encoder: mlp
   dropout: 0.0
-  rwpe_walk_length: -1
 
+# this is the sigma parameter for the log-normal weight distributions
 scale_sigma: 0.1
 
 loader:
@@ -60,7 +55,7 @@ optim:
   weight_decay: 0.0
 
 wandb:
-  project: Deep-CDCL
+  project: RLAF
   name: ${model_name}
 
 

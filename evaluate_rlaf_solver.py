@@ -1,14 +1,13 @@
 import os
+
+from omegaconf import DictConfig, OmegaConf
 import hydra
 import pandas as pd
 import torch
-
-from omegaconf import DictConfig, OmegaConf
 from torch_geometric.loader import DataLoader
 
 from src.data.dataset import DimacsCNFDataset
-from src.data.transform import AddNodeFeatures
-from src.model.model import load_checkpoint, GNN
+from src.model.model import load_checkpoint
 from src.policy import policy
 from src.policy.evaluate import sample_var_params, compute_solver_stats, var_params_from_target_prediction
 
@@ -16,14 +15,13 @@ from src.policy.evaluate import sample_var_params, compute_solver_stats, var_par
 def print_solver_metrics(solver_stats: pd.DataFrame) -> None:
     keys = ["decisions", "conflicts", "propagations", "restarts", "CPU time", "GPU time", "time"]
     metrics = {key: solver_stats[key].mean() for key in keys if key in solver_stats.columns}
-
     print(
         f"Metrics: \n"
         + "\n".join(f"{key}: {val:.2f}" for key, val in metrics.items())
     )
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="config_eval")
+@hydra.main(version_base=None, config_path="configs", config_name="config_eval_rlaf_solver")
 def main(cfg: DictConfig):
     OmegaConf.resolve(cfg)
 
