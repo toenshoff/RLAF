@@ -26,5 +26,25 @@ unzip data.zip
 
 ## Training
 
+To train our main RLAF-guided glucose models run the following
+```bash
+train.py model_name=GNN_Glucose_3SAT solver.solver=glucose dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=0.1
+train.py model_name=GNN_Glucose_Coloring solver.solver=glucose dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+train.py model_name=GNN_Glucose_Crypto solver.solver=glucose dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+```
+
+To train our main RLAF-guided march models run the following
+```bash
+train.py model_name=GNN_March_3SAT solver.solver=march dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=0.1
+train.py model_name=GNN_March_Coloring solver.solver=march dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+train.py model_name=GNN_March_Crypto solver.solver=march dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+```
+
+To train our main RLAF-guided march models run the following
+```bash
+train_supervised.py model_name=GNN_Backbone_3SAT target=backbone dataset.train_path=data/training/3sat/sat/*.cnf dataset.val_path=data/validation/3sat/sat/*.cnf
+train_supervised.py model_name=GNN_Core_Coloring target=core dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf
+train_supervised.py model_name=GNN_Core_Crypto target=core dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf
+```
 
 ## Evaluation
