@@ -1,0 +1,31 @@
+# @package _global_
+
+defaults:
+  - _self_
+
+checkpoint: runs/GNN/best.pt
+
+save_file: solver_stats.csv
+
+dataset:
+  eval_path: "data/satlib/val/*.cnf"
+
+solver:
+  solver: null
+  num_workers: 8
+  params:
+    cpu-lim: 36000
+    rnd-freq: 0.0
+    K: 0.1
+
+loader:
+  batch_size: 200
+  num_neighbors: 128
+  num_workers: 0
+
+is_supervised: False
+# scale needed for supervised models
+pred_scale: 1.0
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 1729

@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+  - _self_
+
+dataset:
+  eval_path: "data/satlib/val/*.cnf"
+
+solver:
+  solver: march
+  num_workers: 8
+  add_var_params: "none"
+  params:
+    cpu-lim: 36000
+    rnd-freq: 0.0
+    K: 0.8
+
+seed: 1729
+
+save_dir: runs/${solver.solver}
+save_file: solver_stats.csv
