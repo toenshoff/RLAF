@@ -14,7 +14,7 @@ pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.5.0+c
 ```
 Replace `cu124` with your cuda version or `cpu` when working without an nvidia gpu.
 
-Build sat solvers from source:
+Build sat solvers from source. Ensure that the version of gcc is at least 10 or higher:
 ```bash
 bash build_sovlers.sh
 ```
@@ -53,13 +53,15 @@ Run the following script to evaluate the RLAF-guided Glucose solver on 3SAT prob
 ```bash
 python evaluate_guided_solver.py model_name=GNN_Glucose_3SAT dataset.eval_path=data/test/3sat/450/*.cnf
 ```
+The instance-wise results will be written to a file (`solver_stats.csv`) in the model dir.
 
 To evaluate the supervised models use the `ìs_supervised` flag:
 ```bash
 python evaluate_guided_solver.py model_name=GNN_Backbone_3SAT dataset.eval_path=data/test/3sat/450/*.cnf is_supervised=True pred_scale=10.0
 ```
 
-Finally, to evaluate the base solver run the follwing script:
+To evaluate the base solver run the following script:
 ```bash
 python evaluate_base_solver.py solver.solver=glucose dataset.eval_path=data/test/3sat/450/*.cnf
 ```
+The instance-wise results will be written to the file `runs/glucosesolver_stats.csv`.
