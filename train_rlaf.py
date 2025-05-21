@@ -10,7 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.loader import DataLoader
 from torch_geometric.seed import seed_everything
 
-from evaluate_rlaf_solver import load_checkpoint
+from evaluate_guided_solver import load_checkpoint
 from src.data.dataset import DimacsCNFDataset, RLTrainingDataset
 from src.policy.evaluate import sample_var_params, compute_solver_stats
 from src.model.model import GNN, init_model
