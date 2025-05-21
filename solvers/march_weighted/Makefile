@@ -6,7 +6,7 @@ CFLAGS	=	 -O3 -fno-strict-aliasing -Wall -DNDEBUG -fcommon
 #CFLAGS	= 	-Wall -O3 -ggdb -pg
 #CFLAGS = 	-Wall -O3 -ggdb -pg -lefence
 
-CC	= 	gcc #gcc-4.8
+CC	= 	gcc-10 #gcc-4.8
 
 .c.o:
 		$(CC) -c $(CFLAGS) $(SATTEST) -o $@ $< 
