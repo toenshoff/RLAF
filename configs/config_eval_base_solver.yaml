@@ -4,10 +4,10 @@ defaults:
   - _self_
 
 dataset:
-  eval_path: "data/satlib/val/*.cnf"
+  eval_path: "data/test/3sat/350/*.cnf"
 
 solver:
-  solver: march
+  solver: glucose
   num_workers: 8
   params:
     cpu-lim: 36000

@@ -8,7 +8,7 @@ checkpoint: runs/GNN/best.pt
 save_file: solver_stats.csv
 
 dataset:
-  eval_path: "data/satlib/val/*.cnf"
+  eval_path: "data/test/3sat/350/*.cnf"
 
 solver:
   solver: null

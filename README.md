@@ -28,23 +28,38 @@ unzip data.zip
 
 To train our main RLAF-guided glucose models run the following
 ```bash
-train.py model_name=GNN_Glucose_3SAT solver.solver=glucose dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=0.1
-train.py model_name=GNN_Glucose_Coloring solver.solver=glucose dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
-train.py model_name=GNN_Glucose_Crypto solver.solver=glucose dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+python train_rlaf.py model_name=GNN_Glucose_3SAT solver.solver=glucose dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=0.1
+python train_rlaf.py model_name=GNN_Glucose_Coloring solver.solver=glucose dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00005 training.kl_penalty=1.1
+python train_rlaf.py model_name=GNN_Glucose_Crypto solver.solver=glucose dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
 ```
 
 To train our main RLAF-guided march models run the following
 ```bash
-train.py model_name=GNN_March_3SAT solver.solver=march dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=0.1
-train.py model_name=GNN_March_Coloring solver.solver=march dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
-train.py model_name=GNN_March_Crypto solver.solver=march dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00005 training.kl_penalty=0.1
+python train_rlaf.py model_name=GNN_March_3SAT solver.solver=march dataset.train_path=data/training/3sat/*/*.cnf dataset.val_path=data/validation/3sat/*/*.cnf optim.lr=0.0001 training.kl_penalty=1.0
+python train_rlaf.py model_name=GNN_March_Coloring solver.solver=march dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf optim.lr=0.00001 training.kl_penalty=0.1
+python train_rlaf.py model_name=GNN_March_Crypto solver.solver=march dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf optim.lr=0.00001 training.kl_penalty=0.1
 ```
 
-To train our main RLAF-guided march models run the following
+Training the supervised models:
 ```bash
-train_supervised.py model_name=GNN_Backbone_3SAT target=backbone dataset.train_path=data/training/3sat/sat/*.cnf dataset.val_path=data/validation/3sat/sat/*.cnf
-train_supervised.py model_name=GNN_Core_Coloring target=core dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/*/*.cnf
-train_supervised.py model_name=GNN_Core_Crypto target=core dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf
+python train_supervised.py model_name=GNN_Backbone_3SAT target=backbone dataset.train_path=data/training/3sat/sat/*.cnf dataset.val_path=data/validation/3sat/sat/*.cnf
+python train_supervised.py model_name=GNN_Core_Coloring target=core dataset.train_path=data/training/coloring/*/*.cnf dataset.val_path=data/validation/coloring/unsat/*.cnf
+python train_supervised.py model_name=GNN_Core_Crypto target=core dataset.train_path=data/training/crypto/*.cnf dataset.val_path=data/validation/crypto/*.cnf
 ```
 
 ## Evaluation
+
+Run the following script to evaluate the RLAF-guided Glucose solver on 3SAT problems with 450 variables:
+```bash
+python evaluate_guided_solver.py model_name=GNN_Glucose_3SAT dataset.eval_path=data/test/3sat/450/*.cnf
+```
+
+To evaluate the supervised models use the `ìs_supervised` flag:
+```bash
+python evaluate_guided_solver.py model_name=GNN_Backbone_3SAT dataset.eval_path=data/test/3sat/450/*.cnf is_supervised=True pred_scale=10.0
+```
+
+Finally, to evaluate the base solver run the follwing script:
+```bash
+python evaluate_base_solver.py solver.solver=glucose dataset.eval_path=data/test/3sat/450/*.cnf
+```

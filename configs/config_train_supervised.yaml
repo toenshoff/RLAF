@@ -3,7 +3,7 @@
 defaults:
   - _self_
 
-model_name: MPNN_Backbone_3SAT_200
+model_name: GNN_Backbone_3SAT
 model_dir: runs/${model_name}
 
 from_checkpoint: null
@@ -13,8 +13,8 @@ training:
   use_amp: True
 
 dataset:
-  train_path: "data/training/3sat/200/unsat/*.cnf"
-  val_path: "data/validation/3sat/200/unsat/*.cnf"
+  train_path: "data/training/3sat/sat/*.cnf"
+  val_path: "data/validation/3sat/sat/*.cnf"
   num_workers: 15
   target: backbone
 
