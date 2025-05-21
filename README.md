@@ -1,7 +1,7 @@
 ## RLAF
 
 ## Setup
-We recommend to use the package manager [`conda`](https://docs.conda.io/en/latest/). Once installed run
+We recommend using the package manager [`conda`](https://docs.conda.io/en/latest/). Once installed run
 ```bash
 conda create -n rlaf python=3.12
 conda activate rlaf
@@ -64,4 +64,4 @@ To evaluate the base solver run the following script:
 ```bash
 python evaluate_base_solver.py solver.solver=glucose dataset.eval_path=data/test/3sat/450/*.cnf
 ```
-The instance-wise results will be written to the file `runs/glucosesolver_stats.csv`.
+The instance-wise results will be written to the file `runs/glucose/solver_stats.csv`.
