@@ -16,7 +16,7 @@ Replace `cu124` with your cuda version or `cpu` when working without an nvidia g
 
 Build sat solvers from source. Ensure that the version of gcc is at least 10 or higher:
 ```bash
-bash build_sovlers.sh
+bash build_solvers.sh
 ```
 
 Download the data.zip at [this](https://figshare.com/s/5153ef90859327932238) link. Place it in the RLAF-Supplement directory and unzip:
